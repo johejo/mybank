@@ -30,32 +30,22 @@ void *thread(void *arg) {
         }
 
         tmp = balance;
-
         tmp += deposite;
 
-
-
-        /*--
-          入金結果の標準出力
-          %?の部分は適宜書き換えて下さい
-          --*/
         printf("thread[%d] %d円追加 現在%d円\n", id , deposite, tmp);
 
-
-
         balance = tmp;
-
         if (sync) {
             pthread_mutex_unlock(&MyMutex);
         }
 
         sleep(1);
-
     }
+    return NULL;
 }
 
 int main(int argc, char *argv[]){
-    pthread_t tid1, tid2; 	// スレッド識別変数
+    pthread_t tids[NUM]; 	// スレッド識別変数
     int opt = 0;
     int opts = 0;
     int deposites[NUM];
@@ -77,6 +67,11 @@ int main(int argc, char *argv[]){
         }
     }
 
+    if (argc == 2 || argc >= 5) {
+        print_help();
+        exit(1);
+    }
+
 
     int i;
     for (i = 0; i < NUM; i++) {
@@ -92,25 +87,20 @@ int main(int argc, char *argv[]){
         threadArgs->deposite = deposites[i];
         threadArgs->sync = opts;
 
-        pthread_create(&tid1, NULL, thread, (void *)threadArgs);
+        if (pthread_create(&tids[i], NULL, thread, (void *)threadArgs) < 0){
+            perror("pthread_create error\n");
+            exit(1);
+        }
     }
 
-    /*-- 2つのスレッドを作成 --*/
-
-
-
-    /*-- 残高の表示 --*/
     printf("残高:%d\n", balance);
 
-//
-    if(pthread_join(tid1, NULL) < 0){
-        perror("pthread_join error1");
-        exit(1);
-    }
 
-    if(pthread_join(tid2, NULL) < 0){
-        perror("pthread_join error2");
-        exit(1);
+    for (i = 0; i < NUM; i++) {
+        if (pthread_join((pthread_t) tids[i], NULL) < 0) {
+            perror("pthread_join error");
+            exit(1);
+        }
     }
 
     return 0;
