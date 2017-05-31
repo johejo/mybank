@@ -1,0 +1,1 @@
+Usage: ./mybank [-sh] [THREAD1] [THREAD2]
